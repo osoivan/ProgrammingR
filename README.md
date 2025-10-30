@@ -1,7 +1,7 @@
 # Advanced Programming in R  
 ### University of Augsburg — Centre for Climate Resilience  
 
-This repository contains all teaching materials, R scripts, and example applications used in the **Advanced Programming in R** course taught by **Dr. Cesar Ivan Alvarez** at the **University of Augsburg**.  
+This repository contains all teaching materials, R scripts, and example applications used in the **Advanced Programming in R** course taught by **Dr. Dr. Cesar Ivan Alvarez** at the **University of Augsburg**.  
 
 The course introduces students to advanced techniques in R for data analysis, visualization, spatial data processing, and interactive application development using *Shiny* and *Leaflet*.
 
@@ -54,7 +54,7 @@ University of Augsburg, Germany
 📧 cesar.alvarez@uni-a.de  
 🔗 [Google Scholar](https://scholar.google.es/citations?user=50ILKdkAAAAJ&hl=es)  
 🔗 [GitHub](https://github.com/osoivan)
-🔗 [LinkedIn](https://github.com/osoivan)](https://www.linkedin.com/in/cesar-ivan-alvarez-0847253a/)
+
 ---
 
 ## ⚙️ How to Use the Code
