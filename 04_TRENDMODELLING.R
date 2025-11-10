@@ -14,7 +14,8 @@ library(prophet)
 # 2️⃣ Read Excel sheets (update path)
 # ============================================================
 file_path <- "C:/data/data.xlsx"   # <-- change this
-# Sheets: "pr" (precipitation), "tas" (temperature)
+# Sheets: "pr" (precipitation), "tas" (temperature) 
+# Data available on https://climateknowledgeportal.worldbank.org/download-data
 pr  <- read_excel(file_path, sheet = "pr")
 tas <- read_excel(file_path, sheet = "tas")
 
@@ -132,3 +133,4 @@ View(summary_results)
 # Together, these three approaches allow comparison between
 # deterministic (linear), stochastic (ARIMA), and nonlinear (Prophet)
 # projections for climate variables.
+
