@@ -14,6 +14,9 @@ for (p in packages) {
 }
 
 setwd("C:/data")  # set working directory where your files are stored
+# DATA FROM
+# https://www.gbe-bund.de/gbe/?p_uid=gast&p_aid=36040623&p_sprache=E
+# https://gdz.bkg.bund.de/index.php/default/digitale-geodaten/verwaltungsgebiete/nuts-gebiete-1-5-000-000-stand-31-12-nuts5000-31-12.html
 
 # ============================================================
 # 1️⃣ Load Dataset
@@ -255,3 +258,4 @@ ggplot(map_change) +
 write.csv(summary_stats, "summary_by_year.csv", row.names = FALSE)
 write.csv(state_summary, "summary_by_state.csv", row.names = FALSE)
 write.csv(top_bottom, "top_bottom.csv", row.names = FALSE)
+
