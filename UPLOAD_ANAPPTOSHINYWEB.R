@@ -1,9 +1,9 @@
 install.packages('rsconnect')
 
-rsconnect::setAccountInfo(name='cesarivanalvarez', token='F31E90D4FAF737354ADF3C313A5D5191', secret='XXXXXXXX') 
-
 library(rsconnect)
-# Here put the folder where is your shiny app. It must be called app.R inside the folder you choose - CHANGE SECRET XXX FOR YOUR CREDENTIAL
-rsconnect::deployApp('C:/DWD_Temperature_App') HERE_REPLACE_FOR_SHINY_CREDENTIALS
-rsconnect::showLogs(appName = "DWD_Temperature_Visualizer", streaming = TRUE)
 
+rsconnect::setAccountInfo(name='cesarivanalvarez', token='YYYYYYY', secret='XXXXXX') # Here put your credentials get when you create an account on ShinyApps
+
+# Here put the folder where is your shiny app. It must be called app.R inside the folder you choose, additionally the data you used must be in the same folder
+rsconnect::deployApp('C:/EcuadorInamhi')
+rsconnect::showLogs(appName = "Ecuador_Inamhi", streaming = TRUE)
