@@ -2,14 +2,29 @@
 install.packages("leaflet")
 install.packages("leaflet.extras")
 install.packages("htmlwidgets")
+install.packages("sf")
 
 library(leaflet)
 library(leaflet.extras)
 library(htmlwidgets)
+library(sf)
 
 # Base map setup
+
+germany <- st_read("C:/data/05_HEALTHDATA_ANALYSIS/NUTS5000_N1.shp") # Here you need to modify for your shapefile route
+germany <- st_transform(germany, 4326)
+
 m <- leaflet() %>%
   addTiles(group = "Base Map") %>%
+  
+  addPolygons(
+    data = germany,
+    color = "black",       # boundary color
+    weight = 2,            # line thickness
+    fill = FALSE,          # no fill, just boundary
+    opacity = 1,
+    group = "Germany Boundary"
+  ) %>%
   
   # DTK WMS layers (hidden by default)
   addWMSTiles("https://sgx.geodatenzentrum.de/wms_dtk100", layers = "dtk100",
@@ -56,7 +71,7 @@ m <- leaflet() %>%
   # Layer control
   addLayersControl(
     baseGroups = c("Base Map"),
-    overlayGroups = c("DTK100", "DTK250", "DTK500", "DTK1000"),
+    overlayGroups = c("Germany Boundary", "DTK100", "DTK250", "DTK500", "DTK1000"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
   
@@ -103,4 +118,3 @@ onRender(m, htmlwidgets::JS("
     }.bind(this);
   }
 "))
-
