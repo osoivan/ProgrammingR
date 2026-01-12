@@ -1,0 +1,189 @@
+---
+title: "PM2.5 IDW Interpolation Map (Germany)"
+author: "Cesar Ivan Alvarez"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+#For this script, we require data available in the folder data/pm25germany
+---
+
+## Summary
+
+This report:
+
+1. Reads PM2.5 station measurements (CSV) and station coordinates (Excel).
+
+2. Joins the two tables and cleans missing values.
+
+3. Performs **Inverse Distance Weighting (IDW)** interpolation.
+
+4. Produces:
+   - A **static map** (tmap `plot` mode)
+   - An **interactive map** (tmap `view` mode)
+
+---
+
+## Setup
+### Load and check Data
+
+```{r load, message=FALSE, warning=FALSE}
+# Global chunk options
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+
+# Install packages (run once if needed)
+# install.packages(c("readxl","dplyr","gstat","sp","sf","raster","tmap"))
+
+library(readxl)
+library(dplyr)
+library(gstat)
+library(sp)
+library(sf)
+library(raster)
+library(tmap)
+
+excel_file <- "C:/Users/alvarece/Desktop/MODELAMIENTO Y PROGRAMACION GIS/PRACTICAS/DATOS/pm25germany/Airbase_station_coordinates.xlsx"
+
+csv_path <- "C:/Users/alvarece/Desktop/MODELAMIENTO Y PROGRAMACION GIS/PRACTICAS/DATOS/pm25germany/stations_2025-03-23-2025-03-23.csv"
+
+shp_path <- "C:/Users/alvarece/Desktop/MODELAMIENTO Y PROGRAMACION GIS/PRACTICAS/DATOS/GERMANY/Germany_boundary.shp"
+
+data <- read_excel(excel_file, skip = 4) %>%
+dplyr::select(station_european_code, station_longitude_deg, station_latitude_deg)
+
+# Remove duplicates by station code
+
+aircoordinates <- data %>% distinct(station_european_code, .keep_all = TRUE)
+
+# Quick check
+
+head(aircoordinates)
+
+```
+
+### Basic statistics
+```{r statistics, message=FALSE, warning=FALSE}
+
+airquality <- read.csv(csv_path, sep = ";")
+
+# Join both tables and omit NA
+
+airstations <- left_join(
+airquality,
+aircoordinates,
+by = c("Station.code" = "station_european_code")
+)
+
+# Ensure numeric measure values
+
+airstations$Measure.value <- as.numeric(airstations$Measure.value)
+
+# Drop missing records (both measures and coordinates)
+
+airstations <- na.omit(airstations)
+
+# Quick check
+
+summary(airstations$Measure.value)
+```
+
+### Coordinate System
+
+```{r coordinate, message=FALSE, warning=FALSE}
+coordinates(airstations) <- ~station_longitude_deg + station_latitude_deg
+proj4string(airstations) <- CRS("+init=epsg:4326")
+
+airstations
+
+```
+
+### Create interpolation grid (regular sample)
+
+```{r interpolate, message=FALSE, warning=FALSE}
+
+grd <- spsample(airstations, type = "regular", n = 5000)
+gridded(grd) <- TRUE
+proj4string(grd) <- CRS("+init=epsg:4326")
+
+# Perform IDW interpolation
+
+idw_result <- idw(
+formula = Measure.value ~ 1,
+locations = airstations,
+newdata = grd,
+idp = 2.0
+)
+
+# Convert to raster
+
+idw_raster <- raster(idw_result)
+
+idw_raster
+
+limite <- st_read(shp_path, quiet = TRUE)
+limite <- st_transform(limite, crs = 4326)
+
+```
+
+### Static map
+
+```{r static, message=FALSE, warning=FALSE}
+
+tmap_mode("plot")
+
+tm_shape(idw_raster) +
+tm_raster(
+col = "var1.pred",
+col_alpha = 0.6,
+col.scale = tm_scale_continuous(values = "YlOrRd"),
+col.legend = tm_legend(title = "PM2.5 µg/m³")
+) +
+tm_shape(st_as_sf(airstations)) +
+tm_dots(
+col = "blue",
+size = 0.3,
+fill_alpha = 0.8
+) +
+tm_text("Station.code", size = 0.5, col = "black", just = "left", xmod = 0.5) +
+tm_shape(limite) +
+tm_borders(col = "black", lwd = 2) +
+tm_title("PM2.5 Interpolation Map (IDW)") +
+tm_compass(position = c("left", "top")) +
+tm_scalebar(position = c("right", "bottom"))
+
+```
+
+### Dynamic map
+
+```{r dynamic, message=FALSE, warning=FALSE}
+
+
+tmap_mode("view")
+
+tm_shape(idw_raster, group = "PM2.5 IDW Raster") +
+tm_raster(
+col = "var1.pred",
+col_alpha = 0.6,
+col.scale = tm_scale_continuous(values = "YlOrRd"),
+col.legend = tm_legend(title = "PM2.5 µg/m³")
+) +
+tm_shape(airstations, group = "Stations") +
+tm_dots(
+col = "blue",
+size = 0.3,
+fill_alpha = 0.8,
+popup.vars = c("Station.code", "Measure.value")
+) +
+tm_shape(limite, group = "Boundary") +
+tm_borders(col = "black", lwd = 2) +
+tm_title("PM2.5 Interpolation Interactive Map (IDW)") +
+tm_compass(position = c("left", "top")) +
+tm_scalebar(position = c("right", "bottom"))
+```
