@@ -228,7 +228,7 @@ This repository can be useful for:
 
 ## Author
 
-**Dr. César Iván Alvarez Mendoza**  
+**Dr. Cesar Ivan Alvarez**  
 Geospatial Data Scientist | Remote Sensing Researcher  
 University of Augsburg, Germany  
 
@@ -251,7 +251,7 @@ https://github.com/osoivan
 If you use this repository for teaching, research, or applied work, please cite it as:
 
 ```text
-Alvarez Mendoza, C. I. (2026). Programming in R: Practical scripts for environmental data analysis, GIS, statistics, visualization, and Shiny applications. GitHub repository: https://github.com/osoivan/ProgrammingR
+Alvarez, C. I. (2026). Programming in R: Practical scripts for environmental data analysis, GIS, statistics, visualization, and Shiny applications. GitHub repository: https://github.com/osoivan/ProgrammingR
 ```
 
 ---
