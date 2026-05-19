@@ -1,3 +1,22 @@
+<div align="center">
+
+# Programming in R
+
+![R](https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white)
+![RStudio](https://img.shields.io/badge/RStudio-75AADB?style=for-the-badge&logo=rstudio&logoColor=white)
+![Shiny](https://img.shields.io/badge/Shiny-1E90FF?style=for-the-badge&logo=rstudio&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
+![ggplot2](https://img.shields.io/badge/ggplot2-EA4AAA?style=for-the-badge)
+![sf](https://img.shields.io/badge/sf-2E8B57?style=for-the-badge)
+![terra](https://img.shields.io/badge/terra-8B4513?style=for-the-badge)
+![Spatial%20Analysis](https://img.shields.io/badge/Spatial%20Analysis-FF8C00?style=for-the-badge)
+![GIS](https://img.shields.io/badge/GIS-228B22?style=for-the-badge)
+![Remote%20Sensing](https://img.shields.io/badge/Remote%20Sensing-6A5ACD?style=for-the-badge)
+
+</div>
+
+---
+
 # Programming in R
 
 ## About this repository / Acerca de este repositorio
@@ -9,6 +28,12 @@ Hello, here we share our **Programming in R** module, developed for students, re
 ### Español
 
 Hola, aquí compartimos nuestro módulo de **Programación en R**, desarrollado para estudiantes, investigadores y profesionales que desean aprender R desde ejercicios básicos hasta aplicaciones más avanzadas en análisis de datos ambientales, procesamiento espacial, estadística, visualización y aplicaciones web con Shiny.
+
+🌐 LinkedIn:  
+https://www.linkedin.com/in/cesar-ivan-alvarez-0847253a/
+
+🎓 Google Scholar:  
+https://scholar.google.com/citations?user=50ILKdkAAAAJ&hl=es
 
 ---
 
