@@ -155,7 +155,7 @@ plot(data$Year, data$Precipitation,
      col = "blue",
      lwd = 2,
      ylim = c(0, 1100),             # Vertical axis limits
-     main = "Annual Climate Data - Germany",
+     main = "Annual Climate Data",
      xlab = "Year",
      ylab = "Precipitation (mm)")
 
@@ -212,7 +212,7 @@ plot(data$Year, data$Temperature,
      type = "p",                    # Scatter plot
      pch = 16,                      # Solid circles
      col = "blue",
-     main = "Linear Temperature Trend - Germany",
+     main = "Linear Temperature Trend",
      xlab = "Year",
      ylab = "Temperature (°C)")
 
@@ -254,7 +254,7 @@ png(file.path(dirname(file_path), "temperature_trend.png"),
 plot(data$Year, data$Temperature,
      pch = 16,
      col = "blue",
-     main = "Linear Temperature Trend - Germany",
+     main = "Linear Temperature Trend",
      xlab = "Year",
      ylab = "Temperature (°C)")
 
