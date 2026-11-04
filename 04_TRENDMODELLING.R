@@ -1,136 +1,263 @@
-# ============================================================
-# 1️⃣ Load required libraries
-# ============================================================
-# These packages cover data import, transformation, plotting, and forecasting
-install.packages(c("readxl","tidyr","dplyr","tidyverse","forecast","prophet"))
-library(readxl)
-library(tidyr)
-library(dplyr)
-library(tidyverse)
-library(forecast)
-library(prophet)
 
 # ============================================================
-# 2️⃣ Read Excel sheets (update path)
-# ============================================================
-file_path <- "C:/data/data.xlsx"   # <-- change this
-# Sheets: "pr" (precipitation), "tas" (temperature) 
-# Data available on https://climateknowledgeportal.worldbank.org/download-data
-pr  <- read_excel(file_path, sheet = "pr")
-tas <- read_excel(file_path, sheet = "tas")
-
-# ============================================================
-# 3️⃣ Convert both sheets to long format and merge
-# ============================================================
-pr_long <- pr %>%
-  pivot_longer(cols = -c(code, name),
-               names_to = "Year",
-               values_to = "Precipitation") %>%
-  mutate(Year = as.numeric(substr(Year,1,4)))
-
-tas_long <- tas %>%
-  pivot_longer(cols = -c(code, name),
-               names_to = "Year",
-               values_to = "Temperature") %>%
-  mutate(Year = as.numeric(substr(Year,1,4)))
-
-data <- left_join(pr_long, tas_long, by = c("code","name","Year"))
-head(data)
-
-# ============================================================
-# 4️⃣ Choose variable for modelling
-# ============================================================
-# You can switch between "Temperature" or "Precipitation"
-var <- "Temperature"
-df <- data %>%
-  select(Year, all_of(var)) %>%
-  rename(Value = all_of(var))
-
-# ============================================================
-# 5️⃣ Linear Regression Model
-# ============================================================
-model_lin <- lm(Value ~ Year, data = df)
-summary(model_lin)
-
-# Prediction years
-target_years <- data.frame(Year = c(2027,2030,2035,2040,2045,2050,2075,2100))
-target_years$Linear <- predict(model_lin, newdata = target_years)
-
-# Plot
-ggplot(df,aes(Year,Value)) +
-  geom_point(color="blue") +
-  geom_smooth(method="lm",se=TRUE,color="red") +
-  geom_point(data=target_years,aes(Year,Linear),color="darkgreen",size=3) +
-  labs(title=paste("Linear Trend of",var,"(Ecuador, 1950–2023)"),
-       subtitle="Predictions for 2030–2100", y=var, x="Year") +
-  theme_minimal()
-
-# ============================================================
-# 6️⃣ ARIMA Model
-# ============================================================
-ts_data <- ts(df$Value, start=min(df$Year), frequency=1)
-fit_arima <- auto.arima(ts_data)
-summary(fit_arima)
-
-# Forecast to 2100
-forecast_arima <- forecast(fit_arima, h=2100-max(df$Year))
-autoplot(forecast_arima) +
-  labs(title=paste("ARIMA Forecast for",var),
-       x="Year",y=var)+theme_minimal()
-
-# Extract forecasted values for target years
-years_ahead <- target_years$Year - max(df$Year)
-target_years$ARIMA <- forecast_arima$mean[years_ahead]
-
-# ============================================================
-# 7️⃣ Prophet Model
-# ============================================================
-df_prophet <- data.frame(ds=as.Date(paste0(df$Year,"-01-01")), y=df$Value)
-m <- prophet(df_prophet)
-future <- make_future_dataframe(m, periods=2100-2023, freq="year")
-forecast_prophet <- predict(m,future)
-
-# Plot Prophet results
-plot(m,forecast_prophet)
-prophet_plot_components(m,forecast_prophet)
-
-# Extract Prophet predictions for selected years
-prophet_selected <- forecast_prophet %>%
-  mutate(Year = as.numeric(format(ds,"%Y"))) %>%
-  filter(Year %in% target_years$Year) %>%
-  select(Year, yhat)
-
-# Merge Prophet predictions
-target_years <- left_join(target_years, prophet_selected, by="Year")
-colnames(target_years)[ncol(target_years)] <- "Prophet"
-
-# ============================================================
-# 8️⃣ Combine all predictions in one summary dataframe
-# ============================================================
-summary_results <- target_years %>%
-  select(Year, Linear, ARIMA, Prophet)
-
-View(summary_results)
-
-# ============================================================
-# 9️⃣ Interpretation and validation metrics
-# ============================================================
-# 1. Linear model:
-#      - Slope (β1): yearly rate of change (e.g., °C/year)
-#      - R²: proportion of variance explained
-#      - p-value: trend significance
+# PRACTICE: CLIMATE DATA ANALYSIS USING R
+# Germany - Temperature and Precipitation (1950-2025)
 #
-# 2. ARIMA model:
-#      - AIC (Akaike Information Criterion): model fit (lower = better)
-#      - RMSE (Root Mean Square Error): average error
-#      - Residuals should resemble white noise
-#
-# 3. Prophet model:
-#      - Flexible nonlinear trend with uncertainty intervals
-#      - Metrics: MAPE, RMSE (via performance_metrics if desired)
-#      - Components: trend(t) + seasonality(t) + error(t)
-#
-# Together, these three approaches allow comparison between
-# deterministic (linear), stochastic (ARIMA), and nonlinear (Prophet)
-# projections for climate variables.
+# Source: World Bank Climate Change Knowledge Portal
+# Dataset: ERA5 - Historical Climate Data
+# https://climateknowledgeportal.worldbank.org/download-data
+# ============================================================
 
+
+# ============================================================
+# 1. LOAD LIBRARY
+# ============================================================
+
+# Install the library if necessary
+# install.packages("readxl")
+
+library(readxl)                      # Read Excel files
+
+
+# ============================================================
+# 2. READ THE EXCEL FILE
+# ============================================================
+
+# Location of the Excel file
+file_path <- "C:/data/data.xlsx"
+
+# Read the Excel sheet
+excel <- read_excel(file_path, sheet = "CCKP Data")
+
+# Explore the original data
+head(excel)                          # First six rows
+names(excel)                         # Column names
+dim(excel)                           # Number of rows and columns
+
+
+# ============================================================
+# 3. PREPARE THE CLIMATE DATA
+# ============================================================
+
+# The Excel file contains:
+# Column 1: Country code
+# Column 2: Country name
+# Row 1: Temperature observations
+# Row 2: Precipitation observations
+# Columns 3 onward: Annual climate values
+
+# Extract the years from the column names
+years <- names(excel)[3:ncol(excel)]
+
+# Create a new dataframe with three columns
+data <- data.frame(
+  Year = as.numeric(substr(years, 1, 4)),
+  Temperature = as.numeric(unlist(excel[1, 3:ncol(excel)])),
+  Precipitation = as.numeric(unlist(excel[2, 3:ncol(excel)]))
+)
+
+# Sort observations by year
+data <- data[order(data$Year), ]
+
+# Explore the new dataframe
+head(data)                          # First six observations
+summary(data)                       # Summary statistics
+View(data)                          # Open the table
+
+
+# ============================================================
+# 4. EXPORT THE DATA TO CSV
+# ============================================================
+
+# Save CSV in the same folder as the Excel file
+output_file <- file.path(
+  dirname(file_path),
+  "climate_data_germany.csv"
+)
+
+write.csv(data, output_file, row.names = FALSE)
+
+
+# ============================================================
+# 5. DESCRIPTIVE STATISTICS
+# ============================================================
+
+# Temperature statistics
+mean(data$Temperature, na.rm = TRUE)  # Mean temperature
+min(data$Temperature, na.rm = TRUE)   # Minimum temperature
+max(data$Temperature, na.rm = TRUE)   # Maximum temperature
+sd(data$Temperature, na.rm = TRUE)    # Standard deviation
+
+# Precipitation statistics
+mean(data$Precipitation, na.rm = TRUE) # Mean precipitation
+min(data$Precipitation, na.rm = TRUE)  # Minimum precipitation
+max(data$Precipitation, na.rm = TRUE)  # Maximum precipitation
+sd(data$Precipitation, na.rm = TRUE)   # Standard deviation
+
+
+# ============================================================
+# 6. LINE PLOT - ANNUAL TEMPERATURE
+# ============================================================
+
+plot(data$Year, data$Temperature,
+     type = "l",                    # l = lines
+     col = "red",                   # Line colour
+     lwd = 2,                       # Line width
+     main = "Annual Temperature - Germany",
+     xlab = "Year",
+     ylab = "Temperature (°C)")
+
+
+# ============================================================
+# 7. HISTOGRAM - TEMPERATURE DISTRIBUTION
+# ============================================================
+
+hist(data$Temperature,
+     col = "lightblue",             # Bar colour
+     border = "black",              # Border colour
+     breaks = 10,                   # Approximate number of bins
+     main = "Temperature Distribution",
+     xlab = "Temperature (°C)",
+     ylab = "Frequency")
+
+
+# ============================================================
+# 8. BOXPLOT - TEMPERATURE VARIABILITY
+# ============================================================
+
+boxplot(data$Temperature,
+        col = "lightgreen",         # Box colour
+        main = "Temperature Variability",
+        ylab = "Temperature (°C)")
+
+
+# ============================================================
+# 9. SCATTER PLOT - TEMPERATURE VS PRECIPITATION
+# ============================================================
+
+plot(data$Temperature, data$Precipitation,
+     type = "p",                    # p = points
+     pch = 16,                      # Solid circles
+     col = "blue",                  # Point colour
+     main = "Temperature vs Precipitation",
+     xlab = "Temperature (°C)",
+     ylab = "Precipitation (mm)")
+
+
+# ============================================================
+# 10. LINE PLOT - ANNUAL PRECIPITATION
+# ============================================================
+
+
+# 1. Plot annual precipitation
+plot(data$Year, data$Precipitation,
+     type = "l",                    # Line graph
+     col = "blue",
+     lwd = 2,
+     ylim = c(0, 1100),             # Vertical axis limits
+     main = "Annual Climate Data - Germany",
+     xlab = "Year",
+     ylab = "Precipitation (mm)")
+
+# 2. Add another line to the same graph
+lines(data$Year, data$Temperature,
+      col = "red",                  # Second line in red
+      lwd = 2)
+
+# 3. Add a legend
+legend("topright",
+       legend = c("Precipitation", "Temperature"),
+       col = c("blue", "red"),
+       lty = 1,
+       lwd = 2)
+
+
+# ============================================================
+# 11. BAR PLOT - ANNUAL PRECIPITATION
+# ============================================================
+
+barplot(data$Precipitation,
+        names.arg = data$Year,      # Year labels
+        col = "skyblue",            # Bar colour
+        border = NA,                # No bar borders
+        main = "Annual Precipitation",
+        xlab = "Year",
+        ylab = "Precipitation (mm)",
+        las = 2,                    # Rotate labels
+        cex.names = 0.5)            # Smaller text
+
+
+# ============================================================
+# 12. CORRELATION
+# ============================================================
+
+# Calculate correlation between temperature and precipitation
+cor(data$Temperature,
+    data$Precipitation,
+    use = "complete.obs")
+
+
+# ============================================================
+# 13. SIMPLE LINEAR REGRESSION
+# ============================================================
+
+# Model: Temperature = b0 + b1 * Year
+model <- lm(Temperature ~ Year, data = data)
+
+# Display model results
+summary(model)
+
+# Plot original temperature observations
+plot(data$Year, data$Temperature,
+     type = "p",                    # Scatter plot
+     pch = 16,                      # Solid circles
+     col = "blue",
+     main = "Linear Temperature Trend - Germany",
+     xlab = "Year",
+     ylab = "Temperature (°C)")
+
+# Add regression line
+abline(model, col = "red", lwd = 2)
+
+
+# ============================================================
+# 14. PREDICT TEMPERATURE FOR FUTURE YEARS
+# ============================================================
+
+# Create dataframe with future years
+future <- data.frame(
+  Year = c(2030, 2040, 2050)
+)
+
+# Predict temperature using the linear model
+future$Temperature <- predict(model, newdata = future)
+
+# Display predictions
+print(future)
+
+# Export predictions to CSV
+write.csv(
+  future,
+  file.path(dirname(file_path), "temperature_predictions.csv"),
+  row.names = FALSE
+)
+
+
+# ============================================================
+# 15. OPTIONAL - EXPORT THE REGRESSION GRAPH
+# ============================================================
+
+# Save the regression plot as a PNG image
+png(file.path(dirname(file_path), "temperature_trend.png"),
+    width = 1000, height = 600)
+
+plot(data$Year, data$Temperature,
+     pch = 16,
+     col = "blue",
+     main = "Linear Temperature Trend - Germany",
+     xlab = "Year",
+     ylab = "Temperature (°C)")
+
+abline(model, col = "red", lwd = 2)
+
+dev.off()                         # Close and save the image
